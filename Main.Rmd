@@ -75,27 +75,164 @@ ps1
 
 
 
+```{r 20, message=F, warning=F}
+goodSamplingDepthSubjects <- c("A06","B01","B04","B09","B11","B12","B16","C09")
+filt.ps1 <- prune_samples(row.names(sample_data(ps1)[sample_data(ps1)$Subject %in% goodSamplingDepthSubjects,]),ps1)
+sample_data(filt.ps1)
+filt.ps1
+```
+
+
+
+
+### Plot OTUs at pylum level which has more than 1% aundance in each sample
+```{r 18_1,warning=F,message=F}
+ps1_phylum <- filt.ps1 %>%
+  tax_glom(taxrank = "Phylum") %>%                     # agglomerate at phylum level
+  transform_sample_counts(function(x) {x/sum(x)} ) %>% # Transform to rel. abundance
+  psmelt() %>%                                         # Melt to long forma
+ filter(Abundance >= 0.01) %>%                         # Filter out low abundance taxa
+  arrange(desc(Abundance)) 
+# Set colors for plotting
+phylum_colors <- c(
+  "#CBD588", "#5F7FC7", "orange","#DA5724", "#508578", "#CD9BCD",
+   "#AD6F3B", "#673770","#D14285", "#652926", "#C84248", 
+  "#8569D5", "#5E738F","#D1A33D", "#8A7C64", "#599861","#5F7FC7","#CBD588", "#5F7FC7", "orange","#DA5724", "#508578", "#CD9BCD",
+   "#AD6F3B", "#673770","#D14285","#CBD588", "#5F7FC7", "orange","#DA5724", "#508578", "#CD9BCD", "#AD6F3B", "#673770","#CBD588"
+)
+# Plot 
+ggplot(ps1_phylum, aes(x = Subject, y = Abundance, 
+                      fill = Phylum, 
+                      label = sprintf("%1.0f%%", 100*round(Abundance, digits = 2)))) + 
+  facet_wrap(~CariesRisk, scales="free_x", nrow=1) + 
+  theme_bw()+
+  geom_bar(stat = "identity") + 
+  #geom_text(size = 1.7, position = position_stack(vjust = 0.5),aes(fontface=2),col = "white") +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        plot.title = element_text(face = "bold", hjust = -0.2),
+        axis.title.y = element_text(face = "bold",vjust = -4)) +
+  scale_fill_manual(values = phylum_colors) + 
+  scale_y_continuous(labels = function(x) paste0(x*100, "%")) +
+  guides(fill = guide_legend(reverse = F, keywidth = 0.8, keyheight = 0.8)) +
+  ylab("Relative Abundance (Phyla > 1%) \n") + xlab("4 samples each group") +
+  ggtitle("(a) At phylum level ") 
+
+```
+
+
+### Plot OTUs at Class level which has more than 1% aundance in each sample
+```{r 18_2,warning=F,message=F}
+ps1_class <- filt.ps1 %>%
+  tax_glom(taxrank = "Class") %>%                     # agglomerate at phylum level
+  transform_sample_counts(function(x) {x/sum(x)} ) %>% # Transform to rel. abundance
+  psmelt() %>%                                         # Melt to long format
+  filter(Abundance >= 0.01) %>%                         # Filter out low abundance taxa
+  arrange(desc(Abundance)) 
+# Plot 
+ggplot(ps1_class, aes(x = Subject, y = Abundance, 
+                      fill = Class, 
+                      label = sprintf("%1.0f%%", 100*round(Abundance, digits = 2)))) + 
+  facet_wrap(~CariesRisk, scales="free_x", nrow=1) + 
+  theme_bw()+
+  geom_bar(stat = "identity") + 
+  #geom_text(size = 1.7, position = position_stack(vjust = 0.5),aes(fontface=2),col = "white") +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+         plot.title = element_text(face = "bold", hjust = -0.2),
+        axis.title.y = element_text(face = "bold",vjust = -4)) +
+  scale_fill_manual(values = phylum_colors) + 
+  scale_y_continuous(labels = function(x) paste0(x*100, "%")) +
+  guides(fill = guide_legend(reverse = F, keywidth = 0.8, keyheight = 0.8)) +
+  ylab("Relative Abundance (Classes > 1%) \n") + xlab("4 samples each group") +
+  ggtitle("(b) At class level") 
+```
+
+### Plot OTUs at Family level which has more than 1% aundance in each sample
+```{r 18_2,warning=F,message=F}
+ps1_family <- filt.ps1 %>%
+  tax_glom(taxrank = "Family") %>%                     # agglomerate at phylum level
+  transform_sample_counts(function(x) {x/sum(x)} ) %>% # Transform to rel. abundance
+  psmelt() %>%                                         # Melt to long format
+  filter(Abundance >= 0.01) %>%                         # Filter out low abundance taxa
+  arrange(desc(Abundance)) 
+# Plot 
+ggplot(ps1_family, aes(x = Subject, y = Abundance, 
+                      fill = Family, 
+                      label = sprintf("%1.0f%%", 100*round(Abundance, digits = 2)))) + 
+  facet_wrap(~CariesRisk, scales="free_x", nrow=1) + 
+  theme_bw()+
+  geom_bar(stat = "identity") + 
+  #geom_text(size = 1.7, position = position_stack(vjust = 0.5),aes(fontface=2),col = "white") +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        plot.title = element_text(face = "bold", hjust = -0.2),
+        axis.title.y = element_text(face = "bold",vjust = -4)) +
+  scale_fill_manual(values = phylum_colors) + 
+  scale_y_continuous(labels = function(x) paste0(x*100, "%")) +
+  guides(fill = guide_legend(reverse = F, keywidth = 0.8, keyheight = 0.8)) +
+  ylab("Relative Abundance (Familiae > 1%) \n") + xlab("4 samples each group") +
+  ggtitle("(c) At family level") 
+```
+
+
+
+
+
+
+
+### Plot OTUs at Genus level which has more than 1% aundance in each sample
+```{r 18_2,warning=F,message=F}
+ps1_Genus <- filt.ps1 %>%
+  tax_glom(taxrank = "Genus") %>%                     # agglomerate at phylum level
+  transform_sample_counts(function(x) {x/sum(x)} ) %>% # Transform to rel. abundance
+  psmelt() %>%                                         # Melt to long format
+  filter(Abundance >= 0.01) %>%                         # Filter out low abundance taxa
+  arrange(desc(Genus)) 
+# Plot 
+ggplot(ps1_Genus, aes(x = Subject, y = Abundance, 
+                      fill = Genus, 
+                      label = sprintf("%1.0f%%", 100*round(Abundance, digits = 2)))) + 
+  facet_wrap(~CariesRisk, scales="free_x", nrow=1) + 
+  theme_bw()+
+  geom_bar(stat = "identity") + 
+  #geom_text(size = 1.7, position = position_stack(vjust = 0.5),aes(fontface=2),col = "white") +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        plot.title = element_text(face = "bold", hjust = -0.2),
+        axis.title.y = element_text(face = "bold",vjust = -4)) +
+  scale_fill_manual(values = phylum_colors) + 
+  scale_y_continuous(labels = function(x) paste0(x*100, "%")) +
+  guides(fill = guide_legend(reverse = F, keywidth = 0.8, keyheight = 0.8)) +
+  ylab("Relative Abundance (Genera > 1%) \n") + xlab("4 samples each group") +
+  ggtitle("(d) At genus level")
+```
+
+
+
+
+
+
 ```{r 18,warning=F,message=F}
 ps.rarefied = rarefy_even_depth(ps1, rngseed=1, sample.size=40520, replace=F)
-plot_richness(ps.rarefied, x="DW.caries", color  = "DW.caries", measures = c("Chao1", "Shannon","Simpson")) +
+plot_richness(ps.rarefied, x="CariesRisk", color  = "CariesRisk", measures = c("Chao1", "Shannon","Simpson")) +
   geom_boxplot() + ggtitle("(a) Alpha Diversity Measure") + 
   theme_bw() + stat_compare_means(method = "anova", label = "p.signif",label.x = 2,size = 3.5,hide.ns = T) +
-  stat_compare_means(method = "anova", size = 1.8, label.x  = 1.3) +
+  stat_compare_means(method = "anova", size = 3, label.x  = 1) +
   theme(axis.text.x = element_text(angle = 0, hjust = 0.5),
         title = element_text(face = "bold"),
-         text=element_text(size=10),
+         text=element_text(size=15),
         legend.title = element_blank(),
         legend.position = "null") + 
-  geom_point() + xlab("") + ylab("")
+  geom_point() + xlab("Caries Risk") + ylab("")
 #stat_compare_means(comparisons = list(c("0ppm","10ppm"), c("10ppm","50ppm"), c("0ppm","50ppm"))) + stat_compare_means(label.y = 2.5) + xlab("")
 ```
 
 
 ## Ordination Plots
 ```{r  19, message=F, warning=F}
-sample_data(filt.ps1)
-ps1.ord <- ordinate(ps.rarefied,"PCoA", "bray")
-p2 = plot_ordination(ps1, ps1.ord,color = "DW.caries") 
+ps1.ord <- ordinate(filt.ps1,"PCoA", "bray")
+p2 = plot_ordination(ps1, ps1.ord,color = "CariesRisk") 
 p2 + geom_point(size = 3) + ggtitle("(b) Bray Curtis") +
   theme_bw() +
   theme(plot.title = element_text(hjust = 0),
@@ -106,14 +243,32 @@ p2 + geom_point(size = 3) + ggtitle("(b) Bray Curtis") +
 
 
 
-```{r 20, message=F, warning=F}
-goodSamplingDepthSubjects <- c("A06","B01","B04","B09","B11","B12","B16","C09")
-filt.ps1 <- prune_samples(row.names(sample_data(ps1)[sample_data(ps1)$Subject %in% goodSamplingDepthSubjects,]),ps1)
-sample_data(filt.ps1)
-filt.ps1
+
+```{r  19, message=F, warning=F}
+ps1.ord <- ordinate(filt.ps1,"PCoA", "unifrac")
+p2 = plot_ordination(ps1, ps1.ord,color = "CariesRisk") 
+p2 + geom_point(size = 3) + 
+  ggtitle("(c) Unweighted UniFrac") +
+  theme_bw()+
+  theme(plot.title = element_text(hjust = 0),
+        title = element_text(face = "bold"),
+        text=element_text(size=13),
+        legend.title = element_blank())
 ```
 
 
+
+```{r  19, message=F, warning=F}
+ps1.ord <- ordinate(filt.ps1,"PCoA", "wunifrac")
+p2 = plot_ordination(ps1, ps1.ord,color = "CariesRisk") 
+p2 + geom_point(size = 3) + 
+  ggtitle("(d) Weighted UniFrac") +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0),
+        title = element_text(face = "bold"),
+        text=element_text(size=13),
+        legend.title = element_blank())
+```
 
 
 
@@ -126,7 +281,7 @@ filt.ps1
 
 ```{r  19, message=F, warning=F}
 
-diagdds = phyloseq_to_deseq2(filt.ps1, ~ DW.caries)
+diagdds = phyloseq_to_deseq2(filt.ps1, ~ CariesRisk)
 gm_mean = function(x, na.rm=T){
   exp(sum(log(x[x > 0]), na.rm = na.rm) / length(x))
 }
@@ -151,7 +306,7 @@ ggplot(sigtab, aes(x=Species, y=log2FoldChange, color=Genus)) +
 
 ```{r  19, message=F, warning=F}
 ps1.Genus = tax_glom(filt.ps1, taxrank="Genus", NArm=FALSE)
-diagdds = phyloseq_to_deseq2(ps1.Genus, ~ DW.caries)
+diagdds = phyloseq_to_deseq2(ps1.Genus, ~ CariesRisk)
 gm_mean = function(x, na.rm=T){
   exp(sum(log(x[x > 0]), na.rm = na.rm) / length(x))
 }
@@ -176,7 +331,7 @@ ggplot(sigtab, aes(x=Genus, y=log2FoldChange, color=Family)) +
 
 ```{r  19, message=F, warning=F}
 ps1.Family = tax_glom(filt.ps1, taxrank="Family", NArm=FALSE)
-diagdds = phyloseq_to_deseq2(ps1.Family, ~ DW.caries)
+diagdds = phyloseq_to_deseq2(ps1.Family, ~ CariesRisk)
 gm_mean = function(x, na.rm=T){
   exp(sum(log(x[x > 0]), na.rm = na.rm) / length(x))
 }
@@ -197,7 +352,7 @@ ggplot(sigtab, aes(x=Family, y=log2FoldChange, color=Order)) +
 
 ```{r  19, message=F, warning=F}
 ps1.Order = tax_glom(filt.ps1, taxrank="Order", NArm=FALSE)
-diagdds = phyloseq_to_deseq2(ps1.Order, ~ DW.caries)
+diagdds = phyloseq_to_deseq2(ps1.Order, ~ CariesRisk)
 gm_mean = function(x, na.rm=T){
   exp(sum(log(x[x > 0]), na.rm = na.rm) / length(x))
 }
@@ -218,7 +373,7 @@ ggplot(sigtab, aes(x=Order, y=log2FoldChange, color=Class)) +
 
 ```{r  19, message=F, warning=F}
 ps1.Class = tax_glom(filt.ps1, taxrank="Class", NArm=FALSE)
-diagdds = phyloseq_to_deseq2(ps1.Class, ~ DW.caries)
+diagdds = phyloseq_to_deseq2(ps1.Class, ~ CariesRisk)
 gm_mean = function(x, na.rm=T){
   exp(sum(log(x[x > 0]), na.rm = na.rm) / length(x))
 }
@@ -239,7 +394,7 @@ ggplot(sigtab, aes(x=Class, y=log2FoldChange, color=Phylum)) +
 
 ```{r  19, message=F, warning=F}
 ps1.Phylum = tax_glom(filt.ps1, taxrank="Phylum", NArm=FALSE)
-diagdds = phyloseq_to_deseq2(ps1.Phylum, ~ DW.caries)
+diagdds = phyloseq_to_deseq2(ps1.Phylum, ~ CariesRisk)
 gm_mean = function(x, na.rm=T){
   exp(sum(log(x[x > 0]), na.rm = na.rm) / length(x))
 }
