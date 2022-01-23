@@ -1,0 +1,168 @@
+qiime tools import \
+  --type 'SampleData[SequencesWithQuality]' \
+  --input-path casava-18-single-end-demultiplexed \
+  --input-format CasavaOneEightSingleLanePerSampleDirFmt \
+  --output-path demux.qza
+
+
+qiime demux summarize \
+  --i-data demux.qza \
+  --o-visualization demux.qzv
+
+qiime tools view demux.qzv
+
+qiime dada2 denoise-single \
+  --i-demultiplexed-seqs demux.qza \
+  --p-trim-left 0 \
+  --p-trunc-len 125 \
+  --o-representative-sequences rep-seqs-dada2.qza \
+  --o-table table-dada2.qza \
+  --o-denoising-stats stats-dada2.qza
+
+mv rep-seqs-dada2.qza rep-seqs.qza
+mv table-dada2.qza table.qza
+
+qiime feature-table summarize \
+  --i-table table.qza \
+  --o-visualization table.qzv \
+  --m-sample-metadata-file sample-metadata.txt
+
+qiime feature-table summarize \
+  --i-table subject-noC10AndA05-filtered-table.qza \
+  --o-visualization subject-noC10AndA05-filtered-table.qzv \
+  --m-sample-metadata-file sample-metadata.txt
+
+
+
+
+
+qiime feature-table tabulate-seqs \
+  --i-data rep-seqs.qza \
+  --o-visualization rep-seqs.qzv
+
+qiime phylogeny align-to-tree-mafft-fasttree \
+  --i-sequences rep-seqs.qza \
+  --o-alignment aligned-rep-seqs.qza \
+  --o-masked-alignment masked-aligned-rep-seqs.qza \
+  --o-tree unrooted-tree.qza \
+  --o-rooted-tree rooted-tree.qza
+
+
+
+qiime diversity core-metrics-phylogenetic \
+  --i-phylogeny rooted-tree.qza \
+  --i-table table.qza \
+  --p-sampling-depth 65912\
+  --m-metadata-file sample-metadata.txt \
+  --output-dir core-metrics-results
+
+
+
+
+qiime diversity alpha-group-significance \
+  --i-alpha-diversity core-metrics-results/evenness_vector.qza \
+  --m-metadata-file sample-metadata.txt \
+  --o-visualization core-metrics-results/evenness-group-significance.qzv
+
+qiime diversity alpha-group-significance \
+  --i-alpha-diversity core-metrics-results/shannon_vector.qza \
+  --m-metadata-file sample-metadata.txt \
+  --o-visualization core-metrics-results/shanon-group-significance.qzv
+
+
+qiime diversity alpha-rarefaction \
+  --i-table subject-noC10AndA05-filtered-table.qza \
+  --i-phylogeny rooted-tree.qza \
+  --p-max-depth 187555 \
+  --m-metadata-file sample-metadata.txt \
+  --o-visualization alpha-rarefaction-noC10AndA05.qzv
+
+
+
+qiime diversity beta-group-significance \
+  --i-distance-matrix core-metrics-results/unweighted_unifrac_distance_matrix.qza \
+  --m-metadata-file sample-metadata.txt \
+  --m-metadata-column DW.caries \
+  --o-visualization core-metrics-results/unweighted-unifrac-body-site-significance.qzv \
+  --p-pairwise
+
+
+
+
+
+### train classifier
+qiime tools import --type 'FeatureData[Sequence]' --input-path HOMD_16S_rRNA_RefSeq_V15.22.fasta --output-path HOMD_16S_rRNA_RefSeq_V15.22.qza
+
+
+qiime tools import --type 'FeatureData[Taxonomy]' --input-format HeaderlessTSVTaxonomyFormat --input-path HOMD_16S_rRNA_RefSeq_V15.22.qiime.taxonomy --output-path HOMD_V15.22_ref-taxonomy.qza
+
+
+qiime feature-classifier extract-reads --i-sequences HOMD_16S_rRNA_RefSeq_V15.22.qza --p-f-primer GTGCCAGCMGCCGCGGTAA --p-r-primer GGACTACHVGGGTWTCTAAT --p-trunc-len 125 --p-min-length 100 --p-max-length 400 --o-reads ehomd-ref-seqs.qza
+
+
+qiime feature-classifier fit-classifier-naive-bayes --i-reference-reads ehomd-ref-seqs.qza --i-reference-taxonomy HOMD_V15.22_ref-taxonomy.qza --o-classifier classifier-ehomd.qza
+
+qiime feature-classifier classify-sklearn \
+  --i-classifier classifier-ehomd.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza
+
+
+qiime metadata tabulate \
+  --m-input-file taxonomy.qza \
+  --o-visualization taxonomy.qzv
+
+
+qiime taxa barplot \
+  --i-table subject-noC10AndA05-filtered-table.qza \
+  --i-taxonomy taxonomy.qza \
+  --m-metadata-file sample-metadata.txt \
+  --o-visualization taxa-bar-plots.qzv
+
+
+
+qiime feature-table filter-samples \
+  --i-table table.qza \
+  --m-metadata-file sample-metadata.txt \
+  --p-where "[Subject] NOT IN ('C10','A05')" \
+  --o-filtered-table subject-noC10AndA05-filtered-table.qza
+
+
+qiime feature-table filter-samples \
+  --i-table table.qza \
+  --m-metadata-file sample-metadata.txt \
+  --p-where "[Subject] NOT IN ('B19','A08')" \
+  --o-filtered-table subject-noB19A08-filtered-table.qza
+
+
+qiime feature-table summarize \
+  --i-table subject-noB19A08-filtered-table.qza \
+  --o-visualization subject-noB19A08-filtered-table.qzv \
+  --m-sample-metadata-file sample-metadata.txt
+
+
+
+
+qiime diversity alpha-rarefaction \
+  --i-table subject-noB19A08-filtered-table.qza \
+  --i-phylogeny rooted-tree.qza \
+  --p-max-depth 243855\
+  --m-metadata-file sample-metadata.txt \
+  --o-visualization alpha-rarefaction-noB19A08.qzv
+
+
+
+
+qiime diversity core-metrics-phylogenetic \
+  --i-phylogeny rooted-tree.qza \
+  --i-table subject-noB19A08-filtered-table.qza \
+  --p-sampling-depth 64489 \
+  --m-metadata-file sample-metadata.txt \
+  --output-dir core-metrics-results
+
+qiime diversity core-metrics-phylogenetic \
+  --i-phylogeny rooted-tree.qza \
+  --i-table subject-noC10AndA05-filtered-table.qza \
+  --p-sampling-depth 40520 \
+  --m-metadata-file sample-metadata.txt \
+  --output-dir core-metrics-results
