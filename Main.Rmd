@@ -1,7 +1,7 @@
 ---
-title: "Main"
+title: "BMT study day 14"
 author: "Dawud"
-date: "11/28/2021"
+date: "01/30/2022"
 output: html_document
 ---
 
@@ -53,10 +53,10 @@ if(!require(qiime2R)){devtools::install_github("jbisanz/qiime2R")} # Package for
 ## Combine data into a phyloseq object
 ```{r 18,warning=F,message=F}
 ps<-qza_to_phyloseq(
-    features="C:\\Users\\dabduweliuyghurturk\\Documents\\Qiime\\BMT_Day14_CariesRisk\\subject-noC10AndA05-filtered-table.qza",
-    tree="C:\\Users\\dabduweliuyghurturk\\Documents\\Qiime\\BMT_Day14_CariesRisk\\rooted-tree.qza",
-    "C:\\Users\\dabduweliuyghurturk\\Documents\\Qiime\\BMT_Day14_CariesRisk\\taxonomy.qza",
-    metadata = "C:\\Users\\dabduweliuyghurturk\\Documents\\Qiime\\BMT_Day14_CariesRisk\\sample-metadata.txt"
+    features="table.qza",
+    tree="rooted-tree.qza",
+    "taxonomy.qza",
+    metadata = "sample-metadata.txt"
     )
 ps
 
@@ -101,7 +101,7 @@ phylum_colors <- c(
    "#AD6F3B", "#673770","#D14285","#CBD588", "#5F7FC7", "orange","#DA5724", "#508578", "#CD9BCD", "#AD6F3B", "#673770","#CBD588"
 )
 # Plot 
-ggplot(ps1_phylum, aes(x = Subject, y = Abundance, 
+Figure.phylum <- ggplot(ps1_phylum, aes(x = Subject, y = Abundance, 
                       fill = Phylum, 
                       label = sprintf("%1.0f%%", 100*round(Abundance, digits = 2)))) + 
   facet_wrap(~CariesRisk, scales="free_x", nrow=1) + 
@@ -115,7 +115,7 @@ ggplot(ps1_phylum, aes(x = Subject, y = Abundance,
   scale_fill_manual(values = phylum_colors) + 
   scale_y_continuous(labels = function(x) paste0(x*100, "%")) +
   guides(fill = guide_legend(reverse = F, keywidth = 0.8, keyheight = 0.8)) +
-  ylab("Relative Abundance (Phyla > 1%) \n") + xlab("4 samples each group") +
+  ylab("Relative Abundance (Phyla > 1%) \n") + xlab("Group by caries risk") +
   ggtitle("(a) At phylum level ") 
 
 ```
@@ -130,7 +130,7 @@ ps1_class <- filt.ps1 %>%
   filter(Abundance >= 0.01) %>%                         # Filter out low abundance taxa
   arrange(desc(Abundance)) 
 # Plot 
-ggplot(ps1_class, aes(x = Subject, y = Abundance, 
+figure.class <- ggplot(ps1_class, aes(x = Subject, y = Abundance, 
                       fill = Class, 
                       label = sprintf("%1.0f%%", 100*round(Abundance, digits = 2)))) + 
   facet_wrap(~CariesRisk, scales="free_x", nrow=1) + 
@@ -144,7 +144,7 @@ ggplot(ps1_class, aes(x = Subject, y = Abundance,
   scale_fill_manual(values = phylum_colors) + 
   scale_y_continuous(labels = function(x) paste0(x*100, "%")) +
   guides(fill = guide_legend(reverse = F, keywidth = 0.8, keyheight = 0.8)) +
-  ylab("Relative Abundance (Classes > 1%) \n") + xlab("4 samples each group") +
+  ylab("Relative Abundance (Classes > 1%) \n") + xlab("Group by Caries Risk") +
   ggtitle("(b) At class level") 
 ```
 
@@ -157,7 +157,7 @@ ps1_family <- filt.ps1 %>%
   filter(Abundance >= 0.01) %>%                         # Filter out low abundance taxa
   arrange(desc(Abundance)) 
 # Plot 
-ggplot(ps1_family, aes(x = Subject, y = Abundance, 
+figure.family <- ggplot(ps1_family, aes(x = Subject, y = Abundance, 
                       fill = Family, 
                       label = sprintf("%1.0f%%", 100*round(Abundance, digits = 2)))) + 
   facet_wrap(~CariesRisk, scales="free_x", nrow=1) + 
@@ -171,7 +171,7 @@ ggplot(ps1_family, aes(x = Subject, y = Abundance,
   scale_fill_manual(values = phylum_colors) + 
   scale_y_continuous(labels = function(x) paste0(x*100, "%")) +
   guides(fill = guide_legend(reverse = F, keywidth = 0.8, keyheight = 0.8)) +
-  ylab("Relative Abundance (Familiae > 1%) \n") + xlab("4 samples each group") +
+  ylab("Relative Abundance (Familiae > 1%) \n") + xlab("Group by Caries Risk") +
   ggtitle("(c) At family level") 
 ```
 
@@ -190,7 +190,7 @@ ps1_Genus <- filt.ps1 %>%
   filter(Abundance >= 0.01) %>%                         # Filter out low abundance taxa
   arrange(desc(Genus)) 
 # Plot 
-ggplot(ps1_Genus, aes(x = Subject, y = Abundance, 
+figure.genus <- ggplot(ps1_Genus, aes(x = Subject, y = Abundance, 
                       fill = Genus, 
                       label = sprintf("%1.0f%%", 100*round(Abundance, digits = 2)))) + 
   facet_wrap(~CariesRisk, scales="free_x", nrow=1) + 
@@ -204,7 +204,7 @@ ggplot(ps1_Genus, aes(x = Subject, y = Abundance,
   scale_fill_manual(values = phylum_colors) + 
   scale_y_continuous(labels = function(x) paste0(x*100, "%")) +
   guides(fill = guide_legend(reverse = F, keywidth = 0.8, keyheight = 0.8)) +
-  ylab("Relative Abundance (Genera > 1%) \n") + xlab("4 samples each group") +
+  ylab("Relative Abundance (Genera > 1%) \n") + xlab("Group by Caries Risk") +
   ggtitle("(d) At genus level")
 ```
 
@@ -216,7 +216,7 @@ ggplot(ps1_Genus, aes(x = Subject, y = Abundance,
 ```{r 18,warning=F,message=F}
 ps.rarefied = rarefy_even_depth(ps1, rngseed=1, sample.size=40520, replace=F)
 plot_richness(ps.rarefied, x="CariesRisk", color  = "CariesRisk", measures = c("Chao1", "Shannon","Simpson")) +
-  geom_boxplot() + ggtitle("(a) Alpha Diversity Measure") + 
+  geom_boxplot() + ggtitle("Alpha Diversity Measure") + 
   theme_bw() + stat_compare_means(method = "anova", label = "p.signif",label.x = 2,size = 3.5,hide.ns = T) +
   stat_compare_means(method = "anova", size = 3, label.x  = 1) +
   theme(axis.text.x = element_text(angle = 0, hjust = 0.5),
