@@ -19,6 +19,8 @@ knitr::opts_chunk$set(class.source = "watch-out")
 ```
 
 
+## Load packages
+
 ```{r message=F, warning=F}
 # Packages from CRAN:
 if(!require(tidyverse)){install.packages("tidyverse")}
@@ -75,19 +77,9 @@ ps1
 
 
 
-```{r 20, message=F, warning=F}
-goodSamplingDepthSubjects <- c("A06","B01","B04","B09","B11","B12","B16","C09")
-filt.ps1 <- prune_samples(row.names(sample_data(ps1)[sample_data(ps1)$Subject %in% goodSamplingDepthSubjects,]),ps1)
-sample_data(filt.ps1)
-filt.ps1
-```
-
-
-
-
 ### Plot OTUs at pylum level which has more than 1% aundance in each sample
 ```{r 18_1,warning=F,message=F}
-ps1_phylum <- filt.ps1 %>%
+ps1_phylum <- ps1 %>%
   tax_glom(taxrank = "Phylum") %>%                     # agglomerate at phylum level
   transform_sample_counts(function(x) {x/sum(x)} ) %>% # Transform to rel. abundance
   psmelt() %>%                                         # Melt to long forma
@@ -123,7 +115,7 @@ Figure.phylum <- ggplot(ps1_phylum, aes(x = Subject, y = Abundance,
 
 ### Plot OTUs at Class level which has more than 1% aundance in each sample
 ```{r 18_2,warning=F,message=F}
-ps1_class <- filt.ps1 %>%
+ps1_class <- ps1 %>%
   tax_glom(taxrank = "Class") %>%                     # agglomerate at phylum level
   transform_sample_counts(function(x) {x/sum(x)} ) %>% # Transform to rel. abundance
   psmelt() %>%                                         # Melt to long format
@@ -150,7 +142,7 @@ figure.class <- ggplot(ps1_class, aes(x = Subject, y = Abundance,
 
 ### Plot OTUs at Family level which has more than 1% aundance in each sample
 ```{r 18_2,warning=F,message=F}
-ps1_family <- filt.ps1 %>%
+ps1_family <- ps1 %>%
   tax_glom(taxrank = "Family") %>%                     # agglomerate at phylum level
   transform_sample_counts(function(x) {x/sum(x)} ) %>% # Transform to rel. abundance
   psmelt() %>%                                         # Melt to long format
@@ -183,7 +175,7 @@ figure.family <- ggplot(ps1_family, aes(x = Subject, y = Abundance,
 
 ### Plot OTUs at Genus level which has more than 1% aundance in each sample
 ```{r 18_2,warning=F,message=F}
-ps1_Genus <- filt.ps1 %>%
+ps1_Genus <- ps1 %>%
   tax_glom(taxrank = "Genus") %>%                     # agglomerate at phylum level
   transform_sample_counts(function(x) {x/sum(x)} ) %>% # Transform to rel. abundance
   psmelt() %>%                                         # Melt to long format
@@ -210,11 +202,19 @@ figure.genus <- ggplot(ps1_Genus, aes(x = Subject, y = Abundance,
 
 
 
+##Generate taxa bar plot
+```{r}
+ggarrange(Figure.phylum,figure.class,figure.family,figure.genus, 
+          ncol = 2, nrow = 2)
+
+```
 
 
+
+## alpha diversity
 
 ```{r 18,warning=F,message=F}
-ps.rarefied = rarefy_even_depth(ps1, rngseed=1, sample.size=40520, replace=F)
+ps.rarefied = rarefy_even_depth(ps1, rngseed=1, sample.size=, replace=F)
 plot_richness(ps.rarefied, x="CariesRisk", color  = "CariesRisk", measures = c("Chao1", "Shannon","Simpson")) +
   geom_boxplot() + ggtitle("Alpha Diversity Measure") + 
   theme_bw() + stat_compare_means(method = "anova", label = "p.signif",label.x = 2,size = 3.5,hide.ns = T) +
@@ -231,7 +231,7 @@ plot_richness(ps.rarefied, x="CariesRisk", color  = "CariesRisk", measures = c("
 
 ## Ordination Plots
 ```{r  19, message=F, warning=F}
-ps1.ord <- ordinate(filt.ps1,"PCoA", "bray")
+ps1.ord <- ordinate(ps1,"PCoA", "bray")
 p2 = plot_ordination(ps1, ps1.ord,color = "CariesRisk") 
 p2 + geom_point(size = 3) + ggtitle("(b) Bray Curtis") +
   theme_bw() +
@@ -245,7 +245,7 @@ p2 + geom_point(size = 3) + ggtitle("(b) Bray Curtis") +
 
 
 ```{r  19, message=F, warning=F}
-ps1.ord <- ordinate(filt.ps1,"PCoA", "unifrac")
+ps1.ord <- ordinate(ps1,"PCoA", "unifrac")
 p2 = plot_ordination(ps1, ps1.ord,color = "CariesRisk") 
 p2 + geom_point(size = 3) + 
   ggtitle("(c) Unweighted UniFrac") +
@@ -259,7 +259,7 @@ p2 + geom_point(size = 3) +
 
 
 ```{r  19, message=F, warning=F}
-ps1.ord <- ordinate(filt.ps1,"PCoA", "wunifrac")
+ps1.ord <- ordinate(ps1,"PCoA", "wunifrac")
 p2 = plot_ordination(ps1, ps1.ord,color = "CariesRisk") 
 p2 + geom_point(size = 3) + 
   ggtitle("(d) Weighted UniFrac") +
@@ -277,11 +277,9 @@ p2 + geom_point(size = 3) +
 ## Differential Abundace with DESeq2 
 
 
-
-
 ```{r  19, message=F, warning=F}
 
-diagdds = phyloseq_to_deseq2(filt.ps1, ~ CariesRisk)
+diagdds = phyloseq_to_deseq2(ps1, ~ CariesRisk)
 gm_mean = function(x, na.rm=T){
   exp(sum(log(x[x > 0]), na.rm = na.rm) / length(x))
 }
@@ -305,7 +303,7 @@ ggplot(sigtab, aes(x=Species, y=log2FoldChange, color=Genus)) +
 
 
 ```{r  19, message=F, warning=F}
-ps1.Genus = tax_glom(filt.ps1, taxrank="Genus", NArm=FALSE)
+ps1.Genus = tax_glom(ps1, taxrank="Genus", NArm=FALSE)
 diagdds = phyloseq_to_deseq2(ps1.Genus, ~ CariesRisk)
 gm_mean = function(x, na.rm=T){
   exp(sum(log(x[x > 0]), na.rm = na.rm) / length(x))
@@ -330,7 +328,7 @@ ggplot(sigtab, aes(x=Genus, y=log2FoldChange, color=Family)) +
 
 
 ```{r  19, message=F, warning=F}
-ps1.Family = tax_glom(filt.ps1, taxrank="Family", NArm=FALSE)
+ps1.Family = tax_glom(ps1, taxrank="Family", NArm=FALSE)
 diagdds = phyloseq_to_deseq2(ps1.Family, ~ CariesRisk)
 gm_mean = function(x, na.rm=T){
   exp(sum(log(x[x > 0]), na.rm = na.rm) / length(x))
@@ -351,7 +349,7 @@ ggplot(sigtab, aes(x=Family, y=log2FoldChange, color=Order)) +
 
 
 ```{r  19, message=F, warning=F}
-ps1.Order = tax_glom(filt.ps1, taxrank="Order", NArm=FALSE)
+ps1.Order = tax_glom(ps1, taxrank="Order", NArm=FALSE)
 diagdds = phyloseq_to_deseq2(ps1.Order, ~ CariesRisk)
 gm_mean = function(x, na.rm=T){
   exp(sum(log(x[x > 0]), na.rm = na.rm) / length(x))
@@ -372,7 +370,7 @@ ggplot(sigtab, aes(x=Order, y=log2FoldChange, color=Class)) +
 
 
 ```{r  19, message=F, warning=F}
-ps1.Class = tax_glom(filt.ps1, taxrank="Class", NArm=FALSE)
+ps1.Class = tax_glom(ps1, taxrank="Class", NArm=FALSE)
 diagdds = phyloseq_to_deseq2(ps1.Class, ~ CariesRisk)
 gm_mean = function(x, na.rm=T){
   exp(sum(log(x[x > 0]), na.rm = na.rm) / length(x))
@@ -393,7 +391,7 @@ ggplot(sigtab, aes(x=Class, y=log2FoldChange, color=Phylum)) +
 
 
 ```{r  19, message=F, warning=F}
-ps1.Phylum = tax_glom(filt.ps1, taxrank="Phylum", NArm=FALSE)
+ps1.Phylum = tax_glom(ps1, taxrank="Phylum", NArm=FALSE)
 diagdds = phyloseq_to_deseq2(ps1.Phylum, ~ CariesRisk)
 gm_mean = function(x, na.rm=T){
   exp(sum(log(x[x > 0]), na.rm = na.rm) / length(x))
