@@ -74,6 +74,13 @@ ps
 ps1 <- ps %>%  subset_taxa(Kingdom == "Bacteria" & Family != "mitochondria" & Class != "Chloroplast")
 ps1
 ```
+```{r}
+ps_melted <-  psmelt(ps1)
+1 - sum(is.na(ps_melted$Genus))/nrow(ps_melted)
+## [1] 0.726257
+1 - sum(is.na(ps_melted$Species))/nrow(ps_melted)
+## [1] 0.726257
+```
 
 
 
